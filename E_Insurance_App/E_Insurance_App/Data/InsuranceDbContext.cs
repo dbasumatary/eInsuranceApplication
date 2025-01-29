@@ -8,7 +8,7 @@ namespace E_Insurance_App.Data
         public DbSet<Admin> Admins { get; set; }
         public DbSet<Employee> Employees { get; set; }
         //public DbSet<Customer> Customers { get; set; }
-        //public DbSet<InsuranceAgent> InsuranceAgents { get; set; }
+        public DbSet<Agent> Agents { get; set; }
         //public DbSet<InsurancePlan> InsurancePlans { get; set; }
         //public DbSet<Scheme> Schemes { get; set; }
         //public DbSet<Policy> Policies { get; set; }
@@ -68,6 +68,37 @@ namespace E_Insurance_App.Data
             //    .WithOne(c => c.InsuranceAgent)
             //    .HasForeignKey(c => c.AgentID)
             //    .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Agent>(entity =>
+            {
+                entity.HasKey(a => a.AgentID);
+
+                entity.Property(a => a.AgentID)
+                      .ValueGeneratedOnAdd();
+
+                entity.Property(a => a.Username)
+                      .IsRequired()
+                      .HasMaxLength(50);
+
+                entity.Property(a => a.Password)
+                      .IsRequired()
+                      .HasMaxLength(255);
+
+                entity.Property(a => a.Email)
+                      .IsRequired()
+                      .HasMaxLength(100);
+
+                entity.Property(a => a.FullName)
+                      .IsRequired()
+                      .HasMaxLength(100);
+
+                entity.Property(a => a.CommissionRate)
+                      .IsRequired()
+                      .HasColumnType("decimal(18,2)");
+
+                entity.Property(a => a.CreatedAt)
+                      .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            });
 
             // InsurancePlan entity configuration
             //modelBuilder.Entity<InsurancePlan>()

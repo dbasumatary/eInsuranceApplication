@@ -68,9 +68,11 @@ namespace E_Insurance_App
             builder.Services.AddScoped<IAdminRepository, AdminRepository>();
             builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
             builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<IAgentRepository, AgentRepository>();
 
             builder.Services.AddScoped<IAdminService, AdminService>();
             builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+            builder.Services.AddScoped<IAgentService, AgentService>();
 
 
             //JWT
