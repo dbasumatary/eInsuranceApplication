@@ -9,8 +9,8 @@ namespace E_Insurance_App.Data
         public DbSet<Employee> Employees { get; set; }
         public DbSet<Customer> Customers { get; set; }
         public DbSet<Agent> Agents { get; set; }
-        //public DbSet<InsurancePlan> InsurancePlans { get; set; }
-        //public DbSet<Scheme> Schemes { get; set; }
+        public DbSet<InsurancePlan> InsurancePlans { get; set; }
+        public DbSet<Scheme> Schemes { get; set; }
         //public DbSet<Policy> Policies { get; set; }
         //public DbSet<Payment> Payments { get; set; }
         //public DbSet<Commission> Commissions { get; set; }
@@ -130,11 +130,48 @@ namespace E_Insurance_App.Data
                       .HasDefaultValueSql("CURRENT_TIMESTAMP");
             });
 
+
             modelBuilder.Entity<Agent>()
                 .HasMany(a => a.Customers)
                 .WithOne(c => c.Agent)
                 .HasForeignKey(c => c.AgentID)
                 .OnDelete(DeleteBehavior.Restrict);
+
+
+
+            modelBuilder.Entity<InsurancePlan>(entity =>
+            {
+                entity.HasKey(a => a.PlanID);
+                entity.Property(a => a.PlanName)
+                      .IsRequired()
+                      .HasMaxLength(100);
+                entity.Property(a => a.PlanDetails)
+                      .IsRequired();
+                entity.Property(a => a.CreatedAt)
+                      .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            });
+
+            modelBuilder.Entity<Scheme>(entity =>
+            {
+                entity.HasKey(entity => entity.SchemeID);
+                entity.Property(a => a.SchemeName)
+                      .IsRequired()
+                      .HasMaxLength(100);
+                entity.Property(a => a.SchemeDetails)
+                      .IsRequired();
+                entity.Property(a => a.PlanID)
+                      .IsRequired();
+                entity.Property(e => e.SchemeFactor)
+                    .HasColumnType("DECIMAL(10, 2)");
+                entity.Property(a => a.CreatedAt)
+                      .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            });
+
+            modelBuilder.Entity<Scheme>()
+                        .HasOne(s => s.Plan)
+                        .WithMany(p => p.Schemes)
+                        .HasForeignKey(s => s.PlanID)
+                        .OnDelete(DeleteBehavior.Restrict);
 
 
 
@@ -144,6 +181,12 @@ namespace E_Insurance_App.Data
             //    .WithOne(s => s.InsurancePlan)
             //    .HasForeignKey(s => s.PlanID)
             //    .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Scheme>()
+                        .HasOne(s => s.Plan)
+                        .WithMany(p => p.Schemes)
+                        .HasForeignKey(s => s.PlanID)
+                        .OnDelete(DeleteBehavior.Restrict);
 
             //// Scheme entity configuration
             //modelBuilder.Entity<Scheme>()

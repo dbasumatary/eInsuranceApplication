@@ -22,10 +22,15 @@ namespace E_Insurance_App
 
             // Add services to the container.
 
-            builder.Services.AddControllers();
+            //builder.Services.AddControllers();
+            builder.Services.AddControllers().AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+                options.JsonSerializerOptions.WriteIndented = true;
+            });
+
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
-            //builder.Services.AddSwaggerGen();
 
             builder.Services.AddSwaggerGen(opt =>
             {
@@ -70,12 +75,15 @@ namespace E_Insurance_App
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<IAgentRepository, AgentRepository>();
             builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
+            builder.Services.AddScoped<IInsurancePlanRepository, InsurancePlanRepository>();
+            builder.Services.AddScoped<ISchemeRepository, SchemeRepository>();
 
             builder.Services.AddScoped<IAdminService, AdminService>();
             builder.Services.AddScoped<IEmployeeService, EmployeeService>();
             builder.Services.AddScoped<IAgentService, AgentService>();
-            builder.Services.AddScoped<ICustomerService, CustomerService>();
-
+            builder.Services.AddScoped<ICustomerService, CustomerService>();            
+            builder.Services.AddScoped<IInsurancePlanService, InsurancePlanService>();
+            builder.Services.AddScoped<ISchemeService, SchemeService>();
 
             //JWT
             //var jwtKey = builder.Configuration.GetSection("Jwt")["Key"];
