@@ -7,7 +7,7 @@ namespace E_Insurance_App.Data
     {
         public DbSet<Admin> Admins { get; set; }
         public DbSet<Employee> Employees { get; set; }
-        //public DbSet<Customer> Customers { get; set; }
+        public DbSet<Customer> Customers { get; set; }
         public DbSet<Agent> Agents { get; set; }
         //public DbSet<InsurancePlan> InsurancePlans { get; set; }
         //public DbSet<Scheme> Schemes { get; set; }
@@ -56,6 +56,36 @@ namespace E_Insurance_App.Data
             //    .HasForeignKey(c => c.AgentID)
             //    .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Customer>(entity =>
+            {
+                entity.HasKey(c => c.CustomerID);
+                entity.Property(a => a.CustomerID)
+                      .ValueGeneratedOnAdd();
+                entity.Property(a => a.Username)
+                      .IsRequired()
+                      .HasMaxLength(50);
+                entity.Property(a => a.FullName)
+                      .IsRequired()
+                      .HasMaxLength(100);
+                entity.Property(a => a.Email)
+                      .IsRequired()
+                      .HasMaxLength(50);
+                entity.Property(a => a.Phone)
+                      .IsRequired()
+                      .HasMaxLength(15);
+                entity.Property(a => a.Password)
+                      .IsRequired()
+                      .HasMaxLength(255);
+                entity.Property(a => a.CreatedAt)
+                      .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            });
+
+            modelBuilder.Entity<Customer>()
+                        .HasOne(c => c.Agent) 
+                        .WithMany(a => a.Customers) 
+                        .HasForeignKey(c => c.AgentID)
+                        .OnDelete(DeleteBehavior.Restrict);
+
             // InsuranceAgent entity configuration
             //modelBuilder.Entity<InsuranceAgent>()
             //    .HasIndex(a => a.Username)
@@ -99,6 +129,14 @@ namespace E_Insurance_App.Data
                 entity.Property(a => a.CreatedAt)
                       .HasDefaultValueSql("CURRENT_TIMESTAMP");
             });
+
+            modelBuilder.Entity<Agent>()
+                .HasMany(a => a.Customers)
+                .WithOne(c => c.Agent)
+                .HasForeignKey(c => c.AgentID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+
 
             // InsurancePlan entity configuration
             //modelBuilder.Entity<InsurancePlan>()

@@ -30,5 +30,7 @@ namespace E_Insurance_App.Models.Entities
 
         [Required]
         public decimal CommissionRate { get; set; }
+
+        public virtual ICollection<Customer> Customers { get; set; } //One Agent can have multiple Customers
     }
 }
