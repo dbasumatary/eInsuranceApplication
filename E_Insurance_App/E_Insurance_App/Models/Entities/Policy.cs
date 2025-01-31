@@ -33,5 +33,6 @@ namespace E_Insurance_App.Models.Entities
         public string Status { get; set; } = "Pending";
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public virtual ICollection<Premium> Premiums { get; set; }
     }
 }
