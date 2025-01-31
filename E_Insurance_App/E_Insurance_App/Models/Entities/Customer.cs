@@ -37,5 +37,7 @@ namespace E_Insurance_App.Models.Entities
         public virtual Agent Agent { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public virtual ICollection<Policy> Policies { get; set; }
     }
 }

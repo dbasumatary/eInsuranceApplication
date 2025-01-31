@@ -11,7 +11,7 @@ namespace E_Insurance_App.Data
         public DbSet<Agent> Agents { get; set; }
         public DbSet<InsurancePlan> InsurancePlans { get; set; }
         public DbSet<Scheme> Schemes { get; set; }
-        //public DbSet<Policy> Policies { get; set; }
+        public DbSet<Policy> Policies { get; set; }
         //public DbSet<Payment> Payments { get; set; }
         //public DbSet<Commission> Commissions { get; set; }
         //public DbSet<EmployeeScheme> EmployeeSchemes { get; set; }
@@ -206,6 +206,40 @@ namespace E_Insurance_App.Data
             //    .WithMany(s => s.Policies)
             //    .HasForeignKey(p => p.SchemeID)
             //    .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Policy>(entity =>
+            {
+                entity.HasKey(entity => entity.PolicyID);
+                entity.Property(a => a.CustomerID)
+                      .IsRequired();
+                entity.Property(a => a.SchemeID)
+                      .IsRequired();
+                entity.Property(a => a.PolicyDetails)
+                      .IsRequired();
+                entity.Property(a => a.DateIssued)
+                      .IsRequired();
+                entity.Property(a => a.MaturityPeriod)
+                      .IsRequired();
+                entity.Property(a => a.PolicyLapseDate)
+                      .IsRequired();
+                entity.Property(a => a.Status)
+                      .IsRequired()
+                      .HasDefaultValue("Pending");
+                entity.Property(a => a.CreatedAt)
+                      .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            });
+
+            modelBuilder.Entity<Policy>()
+                        .HasOne(p => p.Customer)
+                        .WithMany(c => c.Policies)
+                        .HasForeignKey(p => p.CustomerID)
+                        .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Policy>()
+                        .HasOne(p => p.Scheme)
+                        .WithMany(s => s.Policies)
+                        .HasForeignKey(p => p.SchemeID)
+                        .OnDelete(DeleteBehavior.Restrict);
 
             // Payment entity configuration
             //modelBuilder.Entity<Payment>()

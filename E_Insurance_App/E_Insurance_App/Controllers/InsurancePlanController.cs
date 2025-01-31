@@ -1,6 +1,7 @@
 ﻿using E_Insurance_App.Models.DTOs;
 using E_Insurance_App.Models.Entities;
 using E_Insurance_App.Services.Interface;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,7 +19,8 @@ namespace E_Insurance_App.Controllers
         }
 
 
-        [HttpPost]
+        [HttpPost("InsurancePlan")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> RegisterPlan([FromBody] InsurancePlanDTO planDto)
         {
             try
@@ -41,7 +43,14 @@ namespace E_Insurance_App.Controllers
             {
                 var plan = await _planService.GetPlanByIdAsync(planId);
                 if (plan == null) return NotFound("Plan not found.");
-                return Ok(plan);
+                var response = new
+                {
+                    plan.PlanID,
+                    plan.PlanName,
+                    plan.PlanDetails,
+                    plan.CreatedAt
+                };
+                return Ok(response);
             }
             catch (Exception ex)
             {

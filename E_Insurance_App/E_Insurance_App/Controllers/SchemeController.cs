@@ -1,6 +1,7 @@
 ﻿using E_Insurance_App.Models.DTOs;
 using E_Insurance_App.Models.Entities;
 using E_Insurance_App.Services.Interface;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Numerics;
@@ -19,6 +20,7 @@ namespace E_Insurance_App.Controllers
         }
 
         [HttpPost("register-scheme")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> RegisterScheme([FromBody] SchemeDTO schemeDto)
         {
             try

@@ -77,6 +77,7 @@ namespace E_Insurance_App
             builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
             builder.Services.AddScoped<IInsurancePlanRepository, InsurancePlanRepository>();
             builder.Services.AddScoped<ISchemeRepository, SchemeRepository>();
+            builder.Services.AddScoped<IPolicyRepository, PolicyRepository>();
 
             builder.Services.AddScoped<IAdminService, AdminService>();
             builder.Services.AddScoped<IEmployeeService, EmployeeService>();
@@ -84,6 +85,7 @@ namespace E_Insurance_App
             builder.Services.AddScoped<ICustomerService, CustomerService>();            
             builder.Services.AddScoped<IInsurancePlanService, InsurancePlanService>();
             builder.Services.AddScoped<ISchemeService, SchemeService>();
+            builder.Services.AddScoped<IPolicyService, PolicyService>();
 
             //JWT
             //var jwtKey = builder.Configuration.GetSection("Jwt")["Key"];

@@ -25,5 +25,7 @@ namespace E_Insurance_App.Models.Entities
         public virtual InsurancePlan Plan { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public virtual ICollection<Policy> Policies { get; set; }
     }
 }
