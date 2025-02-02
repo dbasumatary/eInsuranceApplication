@@ -79,6 +79,7 @@ namespace E_Insurance_App
             builder.Services.AddScoped<ISchemeRepository, SchemeRepository>();
             builder.Services.AddScoped<IPolicyRepository, PolicyRepository>();
             builder.Services.AddScoped<IPremiumRepository, PremiumRepository>();
+            builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 
             builder.Services.AddScoped<IAdminService, AdminService>();
             builder.Services.AddScoped<IEmployeeService, EmployeeService>();
@@ -88,6 +89,7 @@ namespace E_Insurance_App
             builder.Services.AddScoped<ISchemeService, SchemeService>();
             builder.Services.AddScoped<IPolicyService, PolicyService>();
             builder.Services.AddScoped<IPremiumService, PremiumService>();
+            builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 
             //JWT

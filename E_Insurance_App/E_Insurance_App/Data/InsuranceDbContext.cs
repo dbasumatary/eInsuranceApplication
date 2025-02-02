@@ -13,7 +13,7 @@ namespace E_Insurance_App.Data
         public DbSet<Scheme> Schemes { get; set; }
         public DbSet<Policy> Policies { get; set; }
         public DbSet<Premium> Premiums { get; set; }
-        //public DbSet<Payment> Payments { get; set; }
+        public DbSet<Payment> Payments { get; set; }
         //public DbSet<Commission> Commissions { get; set; }
         //public DbSet<EmployeeScheme> EmployeeSchemes { get; set; }
 
@@ -297,6 +297,45 @@ namespace E_Insurance_App.Data
             //    .WithMany(p => p.Payments)
             //    .HasForeignKey(p => p.PolicyID)
             //    .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Payment>(entity =>
+            {
+                entity.HasKey(entity => entity.PaymentID);
+                entity.Property(a => a.CustomerID)
+                      .IsRequired();
+                entity.Property(a => a.PolicyID)
+                      .IsRequired();
+                entity.Property(a => a.PremiumID)
+                      .IsRequired();
+                entity.Property(a => a.Amount)
+                      .IsRequired()
+                      .HasColumnType("DECIMAL(10, 2)");
+                entity.Property(a => a.PaymentDate)
+                      .IsRequired();
+                entity.Property(a => a.PaymentType)
+                      .IsRequired();
+                entity.Property(a => a.Status)
+                      .IsRequired()
+                      .HasDefaultValue("Pending");
+            });
+
+            modelBuilder.Entity<Payment>()
+                        .HasOne(p => p.Customer)
+                        .WithMany()
+                        .HasForeignKey(p => p.CustomerID)
+                        .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Payment>()
+                        .HasOne(p => p.Policy)
+                        .WithMany()
+                        .HasForeignKey(p => p.PolicyID)
+                        .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Payment>()
+                        .HasOne(p => p.Premium)
+                        .WithMany()
+                        .HasForeignKey(p => p.PremiumID)
+                        .OnDelete(DeleteBehavior.Restrict);
 
             // Commission entity configuration
             //modelBuilder.Entity<Commission>()
