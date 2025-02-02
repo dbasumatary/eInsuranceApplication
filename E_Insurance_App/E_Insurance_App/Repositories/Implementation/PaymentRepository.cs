@@ -11,10 +11,12 @@ namespace E_Insurance_App.Repositories.Implementation
     public class PaymentRepository : IPaymentRepository
     {
         private readonly InsuranceDbContext _context;
+        private readonly string _connectionString;
 
         public PaymentRepository(InsuranceDbContext context)
         {
             _context = context;
+            _connectionString = _context.Database.GetDbConnection().ConnectionString;
         }
 
         public async Task<PaymentResponseDTO> ProcessPaymentAsync(Payment request)
@@ -85,6 +87,53 @@ namespace E_Insurance_App.Repositories.Implementation
                 throw new Exception($"Error processing payment: {ex.Message}");
             }
             
+        }
+
+
+        public async Task<List<PaymentViewDTO>> GetPaymentsByCustomerID(int customerID)
+        {
+            try
+            {
+                var payments = new List<PaymentViewDTO>();
+                using (var connection = new SqlConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+                    using (var command = connection.CreateCommand())
+                    {
+                        command.CommandText = "GetPaymentsByCustomerID";
+                        command.CommandType = CommandType.StoredProcedure;
+
+                        var param = command.CreateParameter();
+                        param.ParameterName = "@CustomerID";
+                        param.Value = customerID;
+                        command.Parameters.Add(param);
+
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                payments.Add(new PaymentViewDTO
+                                {
+                                    PaymentID = reader.GetInt32(0),
+                                    CustomerID = reader.GetInt32(1),
+                                    CustomerName = reader.GetString(2),
+                                    PolicyID = reader.GetInt32(3),
+                                    Amount = reader.GetDecimal(4),
+                                    PaymentDate = reader.GetDateTime(5),
+                                    PaymentType = reader.GetString(6),
+                                    Status = reader.GetString(7)
+                                });
+                            }
+                        }
+                    }
+                }
+                return payments;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error getting Payment by CustomerID: {ex.Message}");
+            }
+
         }
     }
 }

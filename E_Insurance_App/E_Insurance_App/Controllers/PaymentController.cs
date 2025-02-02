@@ -34,5 +34,29 @@ namespace E_Insurance_App.Controllers
                 return BadRequest(new { error = ex.Message });
             }
         }
+
+
+        [HttpGet("View")]
+        [Authorize(Roles = "Admin, Customer")]
+        public async Task<IActionResult> GetPaymentsByCustomer(int customerID)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var payments = await _paymentService.GetPaymentsByCustomer(customerID);
+
+                if (payments == null || payments.Count == 0)
+                    return NotFound(new { message = "No payments found for this customer." });
+
+                return Ok(payments);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+            
+        }
     }
 }

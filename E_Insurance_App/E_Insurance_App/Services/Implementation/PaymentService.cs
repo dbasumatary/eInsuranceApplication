@@ -26,5 +26,19 @@ namespace E_Insurance_App.Services.Implementation
             };
             return await _paymentRepository.ProcessPaymentAsync(payment);
         }
+
+
+        public async Task<List<PaymentViewDTO>> GetPaymentsByCustomer(int customerID)
+        {
+            try
+            {
+                return await _paymentRepository.GetPaymentsByCustomerID(customerID);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error getting Payments by CustomerID: {ex.Message}");
+            }
+            
+        }
     }
 }
