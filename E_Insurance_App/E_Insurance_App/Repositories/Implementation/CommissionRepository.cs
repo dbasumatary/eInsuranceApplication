@@ -59,5 +59,44 @@ namespace E_Insurance_App.Repositories.Implementation
             }
             
         }
+
+
+        public async Task<List<CommissionResponseDTO>> GetAgentCommissionsAsync(int agentId)
+        {
+            var commissions = new List<CommissionResponseDTO>();
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                using (var command = new SqlCommand("GetAgentCommission", connection))
+                {
+                    //command.CommandText = "GetAgentCommission";
+                    command.CommandType = CommandType.StoredProcedure;
+
+                    var param = command.CreateParameter();
+                    param.ParameterName = "@AgentID";
+                    param.Value = agentId;
+                    command.Parameters.Add(param);
+
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            commissions.Add(new CommissionResponseDTO
+                            {
+                                CommissionID = reader.GetInt32(0),
+                                AgentID = reader.GetInt32(1),
+                                AgentName = reader.GetString(2),
+                                PolicyID = reader.GetInt32(3),
+                                PremiumID = reader.GetInt32(4),
+                                CommissionAmount = reader.GetDecimal(5),
+                                CreatedAt = reader.GetDateTime(6)
+                            });
+                        }
+                    }
+                }
+            }
+            return commissions;
+        }
     }
 }

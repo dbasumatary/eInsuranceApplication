@@ -24,5 +24,19 @@ namespace E_Insurance_App.Services.Implementation
                 throw new Exception($"Error creating commission: {ex.Message}");
             }
         }
+
+
+        public async Task<List<CommissionResponseDTO>> GetAgentCommissionsAsync(int agentId)
+        {
+            try
+            {
+                return await _commissionRepository.GetAgentCommissionsAsync(agentId);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error getting commission: {ex.Message}");
+            }
+            
+        }
     }
 }

@@ -41,5 +41,28 @@ namespace E_Insurance_App.Controllers
                 return BadRequest(new { error = ex.Message });
             }
         }
+
+
+        [HttpGet("agent")]
+        [Authorize(Roles = "Admin, Agent")]
+        public async Task<IActionResult> GetAgentCommissions(int agentId)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var commissions = await _commissionService.GetAgentCommissionsAsync(agentId);
+                if (commissions == null || commissions.Count == 0)
+                {
+                    return NotFound("No commissions found for this agent.");
+                }
+                return Ok(commissions);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
     }
 }
