@@ -14,7 +14,7 @@ namespace E_Insurance_App.Data
         public DbSet<Policy> Policies { get; set; }
         public DbSet<Premium> Premiums { get; set; }
         public DbSet<Payment> Payments { get; set; }
-        //public DbSet<Commission> Commissions { get; set; }
+        public DbSet<Commission> Commissions { get; set; }
         //public DbSet<EmployeeScheme> EmployeeSchemes { get; set; }
 
         public InsuranceDbContext(DbContextOptions<InsuranceDbContext> options) : base(options)
@@ -348,6 +348,45 @@ namespace E_Insurance_App.Data
             //    .WithMany(p => p.Commissions)
             //    .HasForeignKey(c => c.PolicyID)
             //    .OnDelete(DeleteBehavior.Cascade);
+
+
+            modelBuilder.Entity<Commission>().HasKey(c => c.CommissionID);
+            modelBuilder.Entity<Commission>(entity =>
+            {
+                entity.HasKey(entity => entity.CommissionID);
+                entity.Property(a => a.AgentID)
+                      .IsRequired();
+                entity.Property(a => a.AgentName)
+                      .IsRequired()
+                      .HasMaxLength(100);
+                entity.Property(a => a.PolicyID)
+                      .IsRequired();
+                entity.Property(a => a.PremiumID)
+                      .IsRequired();
+                entity.Property(a => a.CommissionAmount)
+                      .IsRequired()
+                      .HasColumnType("DECIMAL(10, 2)");
+                entity.Property(a => a.CreatedAt)
+                      .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            });
+            modelBuilder.Entity<Commission>()
+                        .HasOne(c => c.Agent)
+                        .WithMany()
+                        .HasForeignKey(c => c.AgentID)
+                        .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Commission>()
+                        .HasOne(c => c.Policy)
+                        .WithMany()
+                        .HasForeignKey(c => c.PolicyID)
+                        .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Commission>()
+                        .HasOne(c => c.Premium)
+                        .WithMany()
+                        .HasForeignKey(c => c.PremiumID)
+                        .OnDelete(DeleteBehavior.Restrict);
+
 
             // EmployeeScheme entity configuration
             //modelBuilder.Entity<EmployeeScheme>()
