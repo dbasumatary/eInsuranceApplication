@@ -5,6 +5,6 @@ namespace E_Insurance_App.Services.Interface
     public interface IPolicyService
     {
         Task<PolicyResponseDTO> CreatePolicyAsync(PolicyCreateDTO policyDTO);
-
+        Task<List<PolicyViewDTO>> GetCustomerPoliciesAsync(int customerID);
     }
 }

@@ -22,13 +22,42 @@ namespace E_Insurance_App.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreatePolicy([FromBody] PolicyCreateDTO policyDTO)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
-            }
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
 
-            var createdPolicy = await _policyService.CreatePolicyAsync(policyDTO);
-            return Ok(new { message = "Policy created successfully", policy = createdPolicy });
+                var createdPolicy = await _policyService.CreatePolicyAsync(policyDTO);
+                return Ok(new { message = "Policy created successfully", policy = createdPolicy });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+            
+        }
+
+
+        [HttpGet("{customerID}")]
+        [Authorize(Roles = "Admin, Customer")]
+        public async Task<IActionResult> GetPoliciesByCustomer(int customerID)
+        {
+            try
+            {
+                var policies = await _policyService.GetCustomerPoliciesAsync(customerID);
+
+                if (policies == null || policies.Count == 0)
+                    return NotFound(new { message = "No policies found for this customer." });
+
+                return Ok(policies);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+            
         }
     }
 }

@@ -27,5 +27,18 @@ namespace E_Insurance_App.Services.Implementation
             }
             
         }
+
+        public async Task<List<PolicyViewDTO>> GetCustomerPoliciesAsync(int customerID)
+        {
+            try
+            {
+                return await _policyRepository.GetPoliciesByCustomerIDAsync(customerID);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error getting Policies by CustomerID: {ex.Message}");
+            }
+            
+        }
     }
 }
