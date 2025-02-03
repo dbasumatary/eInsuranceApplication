@@ -145,6 +145,42 @@ namespace E_Insurance_App.Repositories.Implementation
         }
 
 
+        public async Task<PolicyResponseDTO> PurchasePolicyAsync(PolicyPurchaseDTO policyDto)
+        {
+            var policyResponse = new PolicyResponseDTO();
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                using (var command = new SqlCommand("PurchasePolicy", connection))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+
+                    command.Parameters.Add(new SqlParameter("@CustomerID", policyDto.CustomerID));
+                    command.Parameters.Add(new SqlParameter("@SchemeID", policyDto.SchemeID));
+                    command.Parameters.Add(new SqlParameter("@PolicyDetails", policyDto.PolicyDetails));
+                    command.Parameters.Add(new SqlParameter("@BaseRate", policyDto.BaseRate));
+                    command.Parameters.Add(new SqlParameter("@MaturityPeriod", policyDto.MaturityPeriod));
+
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            policyResponse.PolicyID = reader.GetInt32(0);
+                            policyResponse.CustomerID = reader.GetInt32(1);
+                            policyResponse.SchemeID = reader.GetInt32(2);
+                            policyResponse.PolicyDetails = reader.GetString(3);
+                            policyResponse.CalculatedPremium = reader.GetDecimal(4);
+                            policyResponse.DateIssued = reader.GetDateTime(5);
+                            policyResponse.MaturityPeriod = reader.GetInt32(6);
+                            policyResponse.PolicyLapseDate = reader.GetDateTime(7);
+                            policyResponse.Status = reader.GetString(8);
+                        }
+                    }
+                }
+            }
+            return policyResponse;
+        }
     }
 }
 

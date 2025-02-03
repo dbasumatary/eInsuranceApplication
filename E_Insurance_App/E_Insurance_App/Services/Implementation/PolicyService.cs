@@ -1,4 +1,5 @@
 ﻿using E_Insurance_App.Models.DTOs;
+using E_Insurance_App.Models.Entities;
 using E_Insurance_App.Repositories.Interface;
 using E_Insurance_App.Services.Interface;
 
@@ -39,6 +40,18 @@ namespace E_Insurance_App.Services.Implementation
                 throw new Exception($"Error getting Policies by CustomerID: {ex.Message}");
             }
             
+        }
+
+        public async Task<PolicyResponseDTO> PurchasePolicyAsync(PolicyPurchaseDTO policyDto)
+        {
+            try
+            {
+                return await _policyRepository.PurchasePolicyAsync(policyDto);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error during policy purchase: {ex.Message}");
+            }
         }
     }
 }

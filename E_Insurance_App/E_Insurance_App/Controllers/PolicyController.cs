@@ -59,5 +59,24 @@ namespace E_Insurance_App.Controllers
             }
             
         }
+
+
+        [HttpPost("purchase")]
+        [Authorize(Roles = "Customer, Employee")]
+        public async Task<IActionResult> PurchasePolicy([FromBody] PolicyPurchaseDTO policyDto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var result = await _policyService.PurchasePolicyAsync(policyDto);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
     }
 }
