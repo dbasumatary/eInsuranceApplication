@@ -75,9 +75,9 @@ namespace E_Insurance_App.Repositories.Implementation
                 using (var connection = new SqlConnection(_connectionString))
                 {
                     await connection.OpenAsync();
-                    using (var command = connection.CreateCommand())
+                    using (var command = new SqlCommand("GetPoliciesForCustomer", connection))
                     {
-                        command.CommandText = "GetPoliciesForCustomer";
+                        //command.CommandText = "GetPoliciesForCustomer";
                         command.CommandType = CommandType.StoredProcedure;
 
                         var param = command.CreateParameter();
@@ -96,11 +96,12 @@ namespace E_Insurance_App.Repositories.Implementation
                                     CustomerName = reader.GetString(2),
                                     SchemeID = reader.GetInt32(3),
                                     PolicyDetails = reader.GetString(4),
-                                    DateIssued = reader.GetDateTime(5),
-                                    MaturityPeriod = reader.GetInt32(6),
-                                    PolicyLapseDate = reader.GetDateTime(7),
-                                    Status = reader.GetString(8),
-                                    CreatedAt = reader.GetDateTime(9),
+                                    Premium = reader.IsDBNull(5) ? 0 : reader.GetDecimal(5),
+                                    DateIssued = reader.GetDateTime(6),
+                                    MaturityPeriod = reader.GetInt32(7),
+                                    PolicyLapseDate = reader.GetDateTime(8),
+                                    Status = reader.GetString(9),
+                                    CreatedAt = reader.GetDateTime(10),
                                 });
                             }
                         }

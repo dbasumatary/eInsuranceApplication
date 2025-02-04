@@ -7,6 +7,7 @@
         public string CustomerName { get; set; }
         public int SchemeID { get; set; }
         public string PolicyDetails { get; set; }
+        public decimal Premium { get; set; }
         public DateTime DateIssued { get; set; }
         public int MaturityPeriod { get; set; }
         public DateTime PolicyLapseDate { get; set; }
