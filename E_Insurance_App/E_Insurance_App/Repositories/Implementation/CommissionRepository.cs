@@ -1,5 +1,6 @@
 ﻿using E_Insurance_App.Data;
 using E_Insurance_App.Models.DTOs;
+using E_Insurance_App.Models.Entities;
 using E_Insurance_App.Repositories.Interface;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -72,11 +73,7 @@ namespace E_Insurance_App.Repositories.Implementation
                 {
                     //command.CommandText = "GetAgentCommission";
                     command.CommandType = CommandType.StoredProcedure;
-
-                    var param = command.CreateParameter();
-                    param.ParameterName = "@AgentID";
-                    param.Value = agentId;
-                    command.Parameters.Add(param);
+                    command.Parameters.Add(new SqlParameter("@AgentID", agentId));
 
                     using (var reader = await command.ExecuteReaderAsync())
                     {
@@ -90,7 +87,9 @@ namespace E_Insurance_App.Repositories.Implementation
                                 PolicyID = reader.GetInt32(3),
                                 PremiumID = reader.GetInt32(4),
                                 CommissionAmount = reader.GetDecimal(5),
-                                CreatedAt = reader.GetDateTime(6)
+                                CreatedAt = reader.GetDateTime(6),
+                                IsPaid = reader.GetBoolean(7),
+                                PaymentProcessedDate = reader.IsDBNull(reader.GetOrdinal("PaymentProcessedDate")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("PaymentProcessedDate"))
                             });
                         }
                     }
@@ -98,5 +97,21 @@ namespace E_Insurance_App.Repositories.Implementation
             }
             return commissions;
         }
+
+        public async Task<List<Commission>> GetCommissionsByAgentIdAsync(int agentId)
+        {
+            return await _context.Commissions
+                                 .Where(c => c.AgentID == agentId)
+                                 .ToListAsync();
+        }
+
+
+       
+        public async Task PayCommissionsAsync(List<Commission> commissions)
+        {
+            _context.Commissions.UpdateRange(commissions);
+            await _context.SaveChangesAsync();
+        }
     }
 }
+

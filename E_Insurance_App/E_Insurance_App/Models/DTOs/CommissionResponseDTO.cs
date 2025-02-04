@@ -9,5 +9,7 @@
         public int PremiumID { get; set; }
         public decimal CommissionAmount { get; set; }
         public DateTime CreatedAt { get; set; }
+        public bool IsPaid { get; set; } 
+        public DateTime? PaymentProcessedDate { get; set; }
     }
 }

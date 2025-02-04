@@ -6,5 +6,6 @@ namespace E_Insurance_App.Services.Interface
     {
         Task<List<CommissionResponseDTO>> CalculateAgentCommissionAsync(int agentID);
         Task<List<CommissionResponseDTO>> GetAgentCommissionsAsync(int agentId);
+        Task<bool> PayAgentCommissionAsync(int agentId, List<int> commissionIds);
     }
 }

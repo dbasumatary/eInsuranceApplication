@@ -64,5 +64,37 @@ namespace E_Insurance_App.Controllers
                 return BadRequest(new { error = ex.Message });
             }
         }
+
+
+        [HttpPost("payment")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> PayAgentCommission([FromBody] PayCommissionDTO payCommission)
+        {
+            if (payCommission == null || payCommission.AgentID <= 0 || payCommission.CommissionIDs == null || payCommission.CommissionIDs.Count == 0)
+            {
+                return BadRequest(new { error = "Invalid commission details provided." });
+            }
+
+            try
+            {
+                var result = await _commissionService.PayAgentCommissionAsync(payCommission.AgentID, payCommission.CommissionIDs);
+
+                if (result)
+                {
+                    return Ok(new { message = "Commissions paid successfully." });
+                }
+
+                else
+                {
+                    return NotFound(new { message = "No commissions found or all commissions were already paid." });
+                }
+            }
+
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
     }
 }
+

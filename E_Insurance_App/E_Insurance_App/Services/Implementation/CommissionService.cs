@@ -38,5 +38,32 @@ namespace E_Insurance_App.Services.Implementation
             }
             
         }
+
+
+        public async Task<bool> PayAgentCommissionAsync(int agentId, List<int> commissionIds)
+        {
+            var agentCommissions = await _commissionRepository.GetCommissionsByAgentIdAsync(agentId);
+
+            var commissionsToUpdate = agentCommissions
+                .Where(c => commissionIds.Contains(c.CommissionID) && !c.IsPaid)
+                .ToList();
+
+            if (commissionsToUpdate.Count == 0)
+            {
+                return false;
+            }
+
+            //Updating columns
+            foreach (var commission in commissionsToUpdate)
+            {
+                commission.IsPaid = true;
+                commission.PaymentProcessedDate = DateTime.UtcNow; 
+            }
+
+            await _commissionRepository.PayCommissionsAsync(commissionsToUpdate);
+
+            return true;
+        }
     }
 }
+
