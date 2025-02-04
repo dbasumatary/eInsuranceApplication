@@ -7,5 +7,6 @@ namespace E_Insurance_App.Services.Interface
     {
         Task<PaymentResponseDTO> ProcessPaymentAsync(PaymentDTO paymentDTO);
         Task<List<PaymentViewDTO>> GetPaymentsByCustomer(int customerID);
+        Task<PaymentViewDTO> GenerateReceiptAsync(int paymentId);
     }
 }

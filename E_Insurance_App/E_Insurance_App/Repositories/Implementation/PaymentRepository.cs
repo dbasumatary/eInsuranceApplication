@@ -135,5 +135,46 @@ namespace E_Insurance_App.Repositories.Implementation
             }
 
         }
+
+
+        //Receipt
+        public async Task<PaymentViewDTO> GenerateReceiptAsync(int paymentId)
+        {
+            try
+            {
+                using (var connection = new SqlConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+                    using (var command = new SqlCommand("GenerateReceipt", connection))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+                        command.Parameters.AddWithValue("@PaymentID", paymentId);
+
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                return new PaymentViewDTO
+                                {
+                                    PaymentID = reader.GetInt32(0),
+                                    CustomerID = reader.GetInt32(1),
+                                    CustomerName = reader.GetString(2),
+                                    PolicyID = reader.GetInt32(3),
+                                    Amount = reader.GetDecimal(4),
+                                    PaymentDate = reader.GetDateTime(5),
+                                    PaymentType = reader.GetString(6),
+                                    Status = reader.GetString(7)
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error generating receipt: {ex.Message}");
+            }
+            return null;
+        }
     }
 }

@@ -5,6 +5,7 @@ using E_Insurance_App.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Reflection.Metadata;
 
 namespace E_Insurance_App.Controllers
 {
@@ -58,5 +59,26 @@ namespace E_Insurance_App.Controllers
             }
             
         }
+
+
+        [HttpGet("receipt/{paymentId}")]
+        public async Task<IActionResult> GetReceipt(int paymentId)
+        {
+            try
+            {
+                var receipt = await _paymentService.GenerateReceiptAsync(paymentId);
+                if (receipt == null)
+                {
+                    return NotFound(new { message = "Receipt not found." });
+                }
+
+                return Ok(receipt);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
     }
 }

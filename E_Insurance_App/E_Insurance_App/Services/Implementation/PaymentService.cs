@@ -40,5 +40,23 @@ namespace E_Insurance_App.Services.Implementation
             }
             
         }
+
+
+        public async Task<PaymentViewDTO> GenerateReceiptAsync(int paymentId)
+        {
+            if (paymentId <= 0)
+            {
+                throw new ArgumentException("Invalid Payment ID.");
+            }
+
+            var receipt = await _paymentRepository.GenerateReceiptAsync(paymentId);
+
+            if (receipt == null)
+            {
+                throw new Exception("Error : Receipt not found.");
+            }
+
+            return receipt;
+        }
     }
 }
