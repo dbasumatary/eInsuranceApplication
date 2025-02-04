@@ -8,5 +8,7 @@ namespace E_Insurance_App.Repositories.Interface
         Task<PolicyResponseDTO> GetPolicyByIdAsync(int policyID);
         Task<List<PolicyViewDTO>> GetPoliciesByCustomerIDAsync(int customerID);
         Task<PolicyResponseDTO> PurchasePolicyAsync(PolicyPurchaseDTO policyDto);
+
+        Task<IEnumerable<PolicyResponseDTO>> GetAgentPoliciesAsync(int agentId);
     }
 }

@@ -53,5 +53,17 @@ namespace E_Insurance_App.Services.Implementation
                 throw new Exception($"Error during policy purchase: {ex.Message}");
             }
         }
+
+        public async Task<IEnumerable<PolicyResponseDTO>> GetAgentPoliciesAsync(int agentId)
+        {
+            try
+            {
+                return await _policyRepository.GetAgentPoliciesAsync(agentId);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error retrieving policies of agent: {ex.Message}");
+            }
+        }
     }
 }

@@ -181,6 +181,26 @@ namespace E_Insurance_App.Repositories.Implementation
             }
             return policyResponse;
         }
+
+
+        public async Task<IEnumerable<PolicyResponseDTO>> GetAgentPoliciesAsync(int agentId)
+        {
+            return await _context.Policies
+                .Where(p => p.Customer.AgentID == agentId)
+                .Select(p => new PolicyResponseDTO
+                {
+                    PolicyID = p.PolicyID,
+                    CustomerID = p.CustomerID,
+                    SchemeID = p.SchemeID,
+                    PolicyDetails = p.PolicyDetails,
+                    CalculatedPremium = p.Premiums.FirstOrDefault().CalculatedPremium,
+                    DateIssued = p.DateIssued,
+                    MaturityPeriod = p.MaturityPeriod,
+                    PolicyLapseDate = p.PolicyLapseDate,
+                    Status = p.Status
+                })
+                .ToListAsync();
+        }
     }
 }
 

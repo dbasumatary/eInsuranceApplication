@@ -78,5 +78,22 @@ namespace E_Insurance_App.Controllers
                 return BadRequest(new { error = ex.Message });
             }
         }
+
+
+        [HttpGet("{agentId}/policies")]
+        [Authorize(Roles = "Agent, Employee")]
+        public async Task<IActionResult> GetAgentPolicies(int agentId)
+        {
+            try
+            {
+                var policies = await _policyService.GetAgentPoliciesAsync(agentId);
+                if (!policies.Any()) return NotFound("No policies found for this agent.");
+                return Ok(policies);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
     }
 }
