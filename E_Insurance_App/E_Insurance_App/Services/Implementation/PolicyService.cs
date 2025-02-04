@@ -78,5 +78,19 @@ namespace E_Insurance_App.Services.Implementation
                 throw new Exception($"Error retrieving policies: {ex.Message}");
             }
         }
+
+
+        public async Task<bool> CancelPolicyAsync(int policyId, string reason, string cancelledBy)
+        {
+            try
+            {
+                return await _policyRepository.CancelPolicyAsync(policyId, reason, cancelledBy);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error processing policy cancellation: {ex.Message}");
+            }
+        }
+
     }
 }

@@ -34,5 +34,6 @@ namespace E_Insurance_App.Models.Entities
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public virtual ICollection<Premium> Premiums { get; set; }
+        public virtual ICollection<PolicyCancellation> Cancellations { get; set; } = new List<PolicyCancellation>();
     }
 }

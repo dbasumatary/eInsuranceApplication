@@ -115,5 +115,32 @@ namespace E_Insurance_App.Controllers
                 return BadRequest(new { error = ex.Message });
             }
         }
+
+
+        [HttpPost("cancel")]
+        [Authorize(Roles = "Customer,Employee")]
+        public async Task<IActionResult> CancelPolicy([FromBody] PolicyCancellationDTO request)
+        {
+            try
+            {
+                if (request.PolicyID <= 0 || string.IsNullOrEmpty(request.Reason))
+                {
+                    return BadRequest(new { message = "Invalid policy ID or reason." });
+                }
+
+                bool isCancelled = await _policyService.CancelPolicyAsync(request.PolicyID, request.Reason, request.CancelledBy);
+
+                if (!isCancelled)
+                    return NotFound(new { message = "Policy cancellation failed or policy not found." });
+
+                return Ok(new { message = "Policy cancelled successfully." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
     }
 }
+

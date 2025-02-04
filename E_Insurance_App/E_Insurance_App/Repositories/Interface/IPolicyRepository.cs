@@ -11,5 +11,7 @@ namespace E_Insurance_App.Repositories.Interface
 
         Task<IEnumerable<PolicyResponseDTO>> GetAgentPoliciesAsync(int agentId);
         Task<List<PolicyResponseDTO>> SearchPoliciesAsync(PolicySearchDTO searchCriteria);
+
+        Task<bool> CancelPolicyAsync(int policyId, string reason, string cancelledBy);
     }
 }

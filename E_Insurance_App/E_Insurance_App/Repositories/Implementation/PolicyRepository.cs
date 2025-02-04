@@ -250,6 +250,33 @@ namespace E_Insurance_App.Repositories.Implementation
                 throw new Exception($"Error searching Policy details: {ex.Message}");
             }
         }
+
+
+        public async Task<bool> CancelPolicyAsync(int policyId, string reason, string cancelledBy)
+        {
+            try
+            {
+                using (var connection = new SqlConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+                    using (var command = new SqlCommand("CancelPolicy", connection))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+                        command.Parameters.AddWithValue("@PolicyID", policyId);
+                        command.Parameters.AddWithValue("@Reason", reason);
+                        command.Parameters.AddWithValue("@CancelledBy", cancelledBy);
+
+                        int rowsAffected = await command.ExecuteNonQueryAsync();
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error cancelling policy: {ex.Message}");
+            }
+        }
+
     }
 }
 

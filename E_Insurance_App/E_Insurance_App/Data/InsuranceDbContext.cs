@@ -15,7 +15,8 @@ namespace E_Insurance_App.Data
         public DbSet<Premium> Premiums { get; set; }
         public DbSet<Payment> Payments { get; set; }
         public DbSet<Commission> Commissions { get; set; }
-        //public DbSet<EmployeeScheme> EmployeeSchemes { get; set; }
+        public DbSet<PolicyCancellation> PolicyCancellations { get; set; }
+
 
         public InsuranceDbContext(DbContextOptions<InsuranceDbContext> options) : base(options)
         {
@@ -388,19 +389,24 @@ namespace E_Insurance_App.Data
                         .OnDelete(DeleteBehavior.Restrict);
 
 
-            // EmployeeScheme entity configuration
-            //modelBuilder.Entity<EmployeeScheme>()
-            //    .HasKey(es => new { es.EmployeeID, es.SchemeID });
-            //modelBuilder.Entity<EmployeeScheme>()
-            //    .HasOne(es => es.Employee)
-            //    .WithMany(e => e.EmployeeSchemes)
-            //    .HasForeignKey(es => es.EmployeeID)
-            //    .OnDelete(DeleteBehavior.Cascade);
-            //modelBuilder.Entity<EmployeeScheme>()
-            //    .HasOne(es => es.Scheme)
-            //    .WithMany(s => s.EmployeeSchemes)
-            //    .HasForeignKey(es => es.SchemeID)
-            //    .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<PolicyCancellation>(entity =>
+            {
+                entity.HasKey(entity => entity.CancellationID);
+                entity.Property(a => a.PolicyID)
+                      .IsRequired();
+                entity.Property(a => a.Reason)
+                      .IsRequired();
+                entity.Property(a => a.CancellationDate)
+                      .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                entity.Property(a => a.CancelledBy)
+                      .IsRequired();
+            });
+                
+            modelBuilder.Entity<PolicyCancellation>()
+                        .HasOne(pc => pc.Policy)
+                        .WithMany(c => c.Cancellations)
+                        .HasForeignKey(pc => pc.PolicyID)
+                        .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }
