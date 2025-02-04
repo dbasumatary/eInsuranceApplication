@@ -95,5 +95,25 @@ namespace E_Insurance_App.Controllers
                 return BadRequest(new { error = ex.Message });
             }
         }
+
+
+        [HttpPost("search")]
+        [Authorize(Roles = "Admin, Employee, Agent, Customer")]
+        public async Task<IActionResult> SearchPolicies([FromBody] PolicySearchDTO searchCriteria)
+        {
+            try
+            {
+                var policies = await _policyService.SearchPoliciesAsync(searchCriteria);
+
+                if (policies == null || policies.Count == 0)
+                    return NotFound(new { message = "No policies found matching the criteria." });
+
+                return Ok(policies);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
     }
 }

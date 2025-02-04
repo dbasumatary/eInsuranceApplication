@@ -10,5 +10,6 @@ namespace E_Insurance_App.Repositories.Interface
         Task<PolicyResponseDTO> PurchasePolicyAsync(PolicyPurchaseDTO policyDto);
 
         Task<IEnumerable<PolicyResponseDTO>> GetAgentPoliciesAsync(int agentId);
+        Task<List<PolicyResponseDTO>> SearchPoliciesAsync(PolicySearchDTO searchCriteria);
     }
 }

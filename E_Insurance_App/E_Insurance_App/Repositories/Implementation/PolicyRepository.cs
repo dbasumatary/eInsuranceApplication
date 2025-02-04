@@ -202,6 +202,54 @@ namespace E_Insurance_App.Repositories.Implementation
                 })
                 .ToListAsync();
         }
+
+
+        public async Task<List<PolicyResponseDTO>> SearchPoliciesAsync(PolicySearchDTO searchCriteria)
+        {
+            try
+            {
+                var policies = new List<PolicyResponseDTO>();
+
+                using (var connection = new SqlConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+                    using (var command = new SqlCommand("SearchPolicies", connection))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+
+                        command.Parameters.AddWithValue("@PolicyId", searchCriteria.PolicyId ?? (object)DBNull.Value);
+                        command.Parameters.AddWithValue("@CustomerName", searchCriteria.CustomerName ?? (object)DBNull.Value);
+                        command.Parameters.AddWithValue("@AgentID", searchCriteria.AgentID ?? (object)DBNull.Value);
+                        command.Parameters.AddWithValue("@EmployeeID", searchCriteria.EmployeeID ?? (object)DBNull.Value);
+
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                policies.Add(new PolicyResponseDTO
+                                {
+                                    PolicyID = reader.GetInt32(reader.GetOrdinal("PolicyID")),
+                                    CustomerID = reader.GetInt32(reader.GetOrdinal("CustomerID")),
+                                    SchemeID = reader.GetInt32(reader.GetOrdinal("SchemeID")),
+                                    PolicyDetails = reader.GetString(reader.GetOrdinal("PolicyDetails")),
+                                    CalculatedPremium = reader.GetDecimal(reader.GetOrdinal("CalculatedPremium")),
+                                    DateIssued = reader.GetDateTime(reader.GetOrdinal("DateIssued")),
+                                    MaturityPeriod = reader.GetInt32(reader.GetOrdinal("MaturityPeriod")),
+                                    PolicyLapseDate = reader.GetDateTime(reader.GetOrdinal("PolicyLapseDate")),
+                                    Status = reader.GetString(reader.GetOrdinal("Status"))
+                                });
+                            }
+                        }
+                    }
+                }
+
+                return policies;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error searching Policy details: {ex.Message}");
+            }
+        }
     }
 }
 

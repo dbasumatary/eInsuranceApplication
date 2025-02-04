@@ -65,5 +65,18 @@ namespace E_Insurance_App.Services.Implementation
                 throw new Exception($"Error retrieving policies of agent: {ex.Message}");
             }
         }
+
+
+        public async Task<List<PolicyResponseDTO>> SearchPoliciesAsync(PolicySearchDTO searchCriteria)
+        {
+            try
+            {
+                return await _policyRepository.SearchPoliciesAsync(searchCriteria);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error retrieving policies: {ex.Message}");
+            }
+        }
     }
 }
