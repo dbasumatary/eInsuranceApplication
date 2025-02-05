@@ -12,10 +12,12 @@ namespace E_Insurance_App.Controllers
     public class InsurancePlanController : ControllerBase
     {
         private readonly IInsurancePlanService _planService;
+        private readonly ILogger<InsurancePlanController> _logger;
 
-        public InsurancePlanController(IInsurancePlanService planService)
+        public InsurancePlanController(IInsurancePlanService planService, ILogger<InsurancePlanController> logger)
         {
             _planService = planService;
+            _logger = logger;
         }
 
 
@@ -23,14 +25,18 @@ namespace E_Insurance_App.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> RegisterPlan([FromBody] InsurancePlanDTO planDto)
         {
+            _logger.LogInformation("Registering new insurance plan.");
+
             try
             {
                 var plan = await _planService.RegisterPlanAsync(planDto);
-                //return CreatedAtAction(nameof(GetPlanById), new { planId = plan.PlanID }, plan);
+
+                _logger.LogInformation("Insurance Plan registered successfully");
                 return Ok(new { Message = "Plan registered successfully", InsurancePlan = plan });
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error registering insurance plan.");
                 return BadRequest(new { error = ex.Message });
             }
         }
@@ -39,10 +45,16 @@ namespace E_Insurance_App.Controllers
         [HttpGet("{planId}")]
         public async Task<IActionResult> GetPlanById(int planId)
         {
+            _logger.LogInformation("Retrieve insurance plan with ID: {PlanId}", planId);
+
             try
             {
                 var plan = await _planService.GetPlanByIdAsync(planId);
-                if (plan == null) return NotFound("Plan not found.");
+                if (plan == null)
+                {
+                    _logger.LogWarning("Insurance Plan with ID: {PlanId} not found", planId);
+                    return NotFound("Plan not found.");
+                }
                 var response = new
                 {
                     plan.PlanID,
@@ -50,10 +62,13 @@ namespace E_Insurance_App.Controllers
                     plan.PlanDetails,
                     plan.CreatedAt
                 };
+
+                _logger.LogInformation($"Insurance Plan retrieved successfully for Id: {planId}");
                 return Ok(response);
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, $"Error retrieving insurance plan of Id: {planId}");
                 return BadRequest(new { error = ex.Message });
             }
         }

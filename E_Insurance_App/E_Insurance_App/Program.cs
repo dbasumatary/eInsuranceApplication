@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using NLog;
+using NLog.Extensions.Logging;
 using System.Text;
 
 namespace E_Insurance_App
@@ -20,9 +22,12 @@ namespace E_Insurance_App
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            //NLog Setup
+            LogManager.Setup().LoadConfigurationFromFile("nlog.config");
+
             // Add services to the container.
 
-            //builder.Services.AddControllers();
+            //Ignore circular dependency
             builder.Services.AddControllers()
                 .AddJsonOptions(options =>
                 {
@@ -157,6 +162,8 @@ namespace E_Insurance_App
                 };
             });
 
+            builder.Logging.ClearProviders();
+            builder.Logging.AddNLog();
 
             var app = builder.Build();
 

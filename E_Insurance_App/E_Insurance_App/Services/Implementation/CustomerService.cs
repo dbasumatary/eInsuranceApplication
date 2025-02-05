@@ -18,6 +18,8 @@ namespace E_Insurance_App.Services.Implementation
 
         public async Task<Customer> RegisterCustomerAsync(CustomerRegisterDTO customerDto)
         {
+            _logger.LogInformation($"Registering new customer with Username: {customerDto.Username}");
+
             try
             {
                 var customer = new Customer
@@ -31,11 +33,14 @@ namespace E_Insurance_App.Services.Implementation
                     AgentID = customerDto.AgentID
                 };
 
-                return await _customerRepository.RegisterCustomerAsync(customer);
+                var result = await _customerRepository.RegisterCustomerAsync(customer);
+
+                _logger.LogInformation($"Customer with Username: {customerDto.Username} successfully registered.");
+                return result;
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error registering customer: {ex.Message}");
+                _logger.LogError($"Error during registering customer with Username: {customerDto.Username}, Error: {ex.Message}");
                 throw new Exception($"Error registering customer: {ex.Message}");
             }
         }
@@ -43,13 +48,21 @@ namespace E_Insurance_App.Services.Implementation
 
         public async Task<Customer?> GetCustomerByIdAsync(int customerId)
         {
+            _logger.LogInformation($"Retrieving customer details for CustomerID: {customerId}");
+
             try
             {
-                return await _customerRepository.GetCustomerByIdAsync(customerId);
+                var customer = await _customerRepository.GetCustomerByIdAsync(customerId);
+                if (customer == null)
+                {
+                    _logger.LogWarning($"Customer with CustomerID: {customerId} not found.");
+                }
+
+                return customer;
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error getting customer by Id: {ex.Message}");
+                _logger.LogError($"Error during getting customer by Id: {customerId}, Error: {ex.Message}");
                 throw new Exception($"Error getting customer by Id: {ex.Message}");
             }
         }
@@ -57,38 +70,50 @@ namespace E_Insurance_App.Services.Implementation
 
         public async Task<IEnumerable<Customer>> GetAllCustomersAsync()
         {
+            _logger.LogInformation("Retrieving all customers.");
+
             try
             {
-                return await _customerRepository.GetAllCustomersAsync();
+                var customers = await _customerRepository.GetAllCustomersAsync();
+
+                _logger.LogInformation($"Retrieved {customers.Count()} customers.");
+                return customers;
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error getting customers list: {ex.Message}");
-                throw new Exception($"Error getting customers list: {ex.Message}");
+                _logger.LogError($"Error during retrieving customers list: {ex.Message}");
+                throw new Exception($"Error retrieving customers list: {ex.Message}");
             }
         }
 
 
         public async Task<Customer?> UpdateCustomerAsync(int customerId, CustomerUpdateDTO customerDto)
         {
+            _logger.LogInformation($"Updating customer details for CustomerID: {customerId}");
+
             try
             {
                 var customer = await _customerRepository.GetCustomerByIdAsync(customerId);
                 if (customer == null)
                 {
+                    _logger.LogWarning($"Customer with CustomerID: {customerId} not found.");
                     return null;
                 }
+
                 customer.Username = customerDto.Username;
                 customer.FullName = customerDto.FullName;
                 customer.Email = customerDto.Email;
                 customer.Phone = customerDto.Phone;
                 customer.AgentID = customerDto.AgentID;
 
-                return await _customerRepository.UpdateCustomerAsync(customer);
+                var updatedCustomer = await _customerRepository.UpdateCustomerAsync(customer);
+
+                _logger.LogInformation($"Customer with CustomerID: {customerId} successfully updated.");
+                return updatedCustomer;
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error updating customer: {ex.Message}");
+                _logger.LogError($"Error during updating customer with CustomerID: {customerId}, Error: {ex.Message}");
                 throw new Exception($"Error updating customer: {ex.Message}");
             }
         }
@@ -96,15 +121,29 @@ namespace E_Insurance_App.Services.Implementation
 
         public async Task<bool> DeleteCustomerAsync(int customerId)
         {
+            _logger.LogInformation($"Delete customer with CustomerID: {customerId}");
+
             try
             {
-                return await _customerRepository.DeleteCustomerAsync(customerId);
+                var result = await _customerRepository.DeleteCustomerAsync(customerId);
+                if (result)
+                {
+                    _logger.LogInformation($"Customer with CustomerID: {customerId} successfully deleted.");
+                }
+                else
+                {
+                    _logger.LogWarning($"Customer with CustomerID: {customerId} not found for deletion.");
+                }
+
+                return result;
             }
+
             catch (Exception ex)
             {
-                _logger.LogError($"Error deleting customer: {ex.Message}");
+                _logger.LogError($"Error during deleting customer with CustomerID: {customerId}, Error: {ex.Message}");
                 throw new Exception($"Error deleting customer: {ex.Message}");
             }
         }
     }
 }
+

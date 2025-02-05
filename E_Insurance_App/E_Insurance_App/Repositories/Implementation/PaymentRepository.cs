@@ -12,15 +12,20 @@ namespace E_Insurance_App.Repositories.Implementation
     {
         private readonly InsuranceDbContext _context;
         private readonly string _connectionString;
+        private readonly ILogger<PaymentRepository> _logger;
 
-        public PaymentRepository(InsuranceDbContext context)
+        public PaymentRepository(InsuranceDbContext context, ILogger<PaymentRepository> logger)
         {
             _context = context;
             _connectionString = _context.Database.GetDbConnection().ConnectionString;
+            _logger = logger;
         }
 
         public async Task<PaymentResponseDTO> ProcessPaymentAsync(Payment request)
         {
+            _logger.LogInformation("Processing payment for CustomerID: {CustomerID}, PolicyID: {PolicyID}, PremiumID: {PremiumID}",
+                request.CustomerID, request.PolicyID, request.PremiumID);
+
             try
             {
                 var connectionString = _context.Database.GetDbConnection().ConnectionString;
@@ -30,7 +35,11 @@ namespace E_Insurance_App.Repositories.Implementation
                 }
 
                 var premium = await _context.Premiums.FindAsync(request.PremiumID);
-                if (premium == null) throw new Exception("Invalid PremiumID");
+                if (premium == null)
+                {
+                    _logger.LogWarning("Invalid PremiumID: {PremiumID}", request.PremiumID);
+                    throw new Exception("Invalid PremiumID");
+                }
 
 
                 // Calculate
@@ -44,6 +53,7 @@ namespace E_Insurance_App.Repositories.Implementation
                 }
                 else
                 {
+                    _logger.LogWarning("Invalid PaymentType: {PaymentType}", request.PaymentType);
                     throw new Exception("Invalid PaymentType. It must be 'Monthly' or 'Yearly'.");
                 }
 
@@ -73,6 +83,8 @@ namespace E_Insurance_App.Repositories.Implementation
                     }
                 }
 
+                _logger.LogInformation("Payment processed successfully with PaymentID: {PaymentID}", paymentID);
+
                 return new PaymentResponseDTO
                 {
                     PaymentID = paymentID,
@@ -84,6 +96,7 @@ namespace E_Insurance_App.Repositories.Implementation
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error processing payment for CustomerID: {CustomerID}, PolicyID: {PolicyID}", request.CustomerID, request.PolicyID);
                 throw new Exception($"Error processing payment: {ex.Message}");
             }
             
@@ -92,6 +105,8 @@ namespace E_Insurance_App.Repositories.Implementation
 
         public async Task<List<PaymentViewDTO>> GetPaymentsByCustomerID(int customerID)
         {
+            _logger.LogInformation("Retrieving payments for CustomerID: {CustomerID}", customerID);
+
             try
             {
                 var payments = new List<PaymentViewDTO>();
@@ -127,10 +142,13 @@ namespace E_Insurance_App.Repositories.Implementation
                         }
                     }
                 }
+
+                _logger.LogInformation("Payments retrieved successfully for CustomerID: {CustomerID}}", customerID);
                 return payments;
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error getting payments for CustomerID: {CustomerID}", customerID);
                 throw new Exception($"Error getting Payment by CustomerID: {ex.Message}");
             }
 
@@ -140,6 +158,8 @@ namespace E_Insurance_App.Repositories.Implementation
         //Receipt
         public async Task<PaymentViewDTO> GenerateReceiptAsync(int paymentId)
         {
+            _logger.LogInformation("Generating receipt for PaymentID: {PaymentID}", paymentId);
+
             try
             {
                 using (var connection = new SqlConnection(_connectionString))
@@ -154,7 +174,7 @@ namespace E_Insurance_App.Repositories.Implementation
                         {
                             if (await reader.ReadAsync())
                             {
-                                return new PaymentViewDTO
+                                var receipt = new PaymentViewDTO
                                 {
                                     PaymentID = reader.GetInt32(0),
                                     CustomerID = reader.GetInt32(1),
@@ -165,6 +185,9 @@ namespace E_Insurance_App.Repositories.Implementation
                                     PaymentType = reader.GetString(6),
                                     Status = reader.GetString(7)
                                 };
+
+                                _logger.LogInformation("Receipt generated successfully for PaymentID: {PaymentID}", paymentId);
+                                return receipt;
                             }
                         }
                     }
@@ -172,6 +195,7 @@ namespace E_Insurance_App.Repositories.Implementation
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error generating receipt for PaymentID: {PaymentID}", paymentId);
                 throw new Exception($"Error generating receipt: {ex.Message}");
             }
             return null;

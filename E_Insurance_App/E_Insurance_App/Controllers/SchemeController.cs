@@ -13,16 +13,20 @@ namespace E_Insurance_App.Controllers
     public class SchemeController : ControllerBase
     {
         private readonly ISchemeService _schemeService;
+        private readonly ILogger<SchemeController> _logger;
 
-        public SchemeController(ISchemeService schemeService)
+        public SchemeController(ISchemeService schemeService, ILogger<SchemeController> logger)
         {
             _schemeService = schemeService;
+            _logger = logger;
         }
 
         [HttpPost("register-scheme")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> RegisterScheme([FromBody] SchemeDTO schemeDto)
         {
+            _logger.LogInformation("Register Scheme ");
+
             try
             {
                 var scheme = await _schemeService.RegisterSchemeAsync(schemeDto);
@@ -36,10 +40,12 @@ namespace E_Insurance_App.Controllers
                     PlanID = scheme.PlanID
                 };
 
+                _logger.LogInformation("Scheme registered successfully");
                 return Ok(new { Message = "Scheme registered successfully", response });
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error registering scheme");
                 return BadRequest(new { error = ex.Message });
             }
         }

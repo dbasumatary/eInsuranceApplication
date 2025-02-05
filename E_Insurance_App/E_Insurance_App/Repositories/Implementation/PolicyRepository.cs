@@ -1,5 +1,6 @@
 ﻿using E_Insurance_App.Data;
 using E_Insurance_App.Models.DTOs;
+using E_Insurance_App.Models.Entities;
 using E_Insurance_App.Repositories.Interface;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -11,22 +12,27 @@ namespace E_Insurance_App.Repositories.Implementation
     {
         private readonly InsuranceDbContext _context;
         private readonly string _connectionString;
+        private readonly ILogger<PolicyRepository> _logger;
 
-        public PolicyRepository(InsuranceDbContext context)
+        public PolicyRepository(InsuranceDbContext context, ILogger<PolicyRepository> logger)
         {
             _context = context;
             _connectionString = _context.Database.GetDbConnection().ConnectionString;
+            _logger = logger;
         }
 
 
         public async Task<int> CreatePolicyAsync(PolicyCreateDTO policyDTO)
         {
+            _logger.LogInformation("Creating policy for CustomerID: {CustomerID}, SchemeID: {SchemeID}", policyDTO.CustomerID, policyDTO.SchemeID);
+
             try
             {
                 int policyID = 0;
                 
                 if (string.IsNullOrEmpty(_connectionString))
                 {
+                    _logger.LogError("Database connection string is null or empty!");
                     throw new Exception("Database connection string is null or empty!");
                 }
 
@@ -56,10 +62,13 @@ namespace E_Insurance_App.Repositories.Implementation
                         policyID = (int)outputParam.Value;
                     }
                 }
+
+                _logger.LogInformation("Policy created successfully with PolicyID: {PolicyID}", policyID);
                 return policyID;
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error during creating policy.");
                 throw new Exception($"Error creating Policy: {ex.Message}");
             }
             
@@ -68,6 +77,8 @@ namespace E_Insurance_App.Repositories.Implementation
 
         public async Task<List<PolicyViewDTO>> GetPoliciesByCustomerIDAsync(int customerID)
         {
+            _logger.LogInformation("Retrieving policies for CustomerID: {CustomerID}", customerID);
+
             try
             {
                 var policies = new List<PolicyViewDTO>();
@@ -108,10 +119,12 @@ namespace E_Insurance_App.Repositories.Implementation
                     }
                 }
 
+                _logger.LogInformation("Retrieved the policy for CustomerID: {CustomerID}", customerID);
                 return policies;
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error during retrieving policy by CustomerID: {CustomerID}", customerID);
                 throw new Exception($"Error getting Policies by CustomerID: {ex.Message}");
             }
             
@@ -121,25 +134,35 @@ namespace E_Insurance_App.Repositories.Implementation
 
         public async Task<PolicyResponseDTO> GetPolicyByIdAsync(int policyID)
         {
+            _logger.LogInformation("Retrieving policy with PolicyID: {PolicyID}", policyID);
+
             try
             {
-                return await _context.Policies
-                .Where(p => p.PolicyID == policyID)
-                .Select(p => new PolicyResponseDTO
+                var policy = await _context.Policies
+                    .Where(p => p.PolicyID == policyID)
+                    .Select(p => new PolicyResponseDTO
+                    {
+                        PolicyID = p.PolicyID,
+                        CustomerID = p.CustomerID,
+                        SchemeID = p.SchemeID,
+                        PolicyDetails = p.PolicyDetails,
+                        DateIssued = p.DateIssued,
+                        MaturityPeriod = p.MaturityPeriod,
+                        PolicyLapseDate = p.PolicyLapseDate,
+                        Status = p.Status
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (policy == null)
                 {
-                    PolicyID = p.PolicyID,
-                    CustomerID = p.CustomerID,
-                    SchemeID = p.SchemeID,
-                    PolicyDetails = p.PolicyDetails,
-                    DateIssued = p.DateIssued,
-                    MaturityPeriod = p.MaturityPeriod,
-                    PolicyLapseDate = p.PolicyLapseDate,
-                    Status = p.Status
-                })
-                .FirstOrDefaultAsync();
+                    _logger.LogWarning("No policy found with PolicyID: {PolicyID}", policyID);
+                }
+
+                return policy;
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error during retrieving policy with PolicyID: {PolicyID}", policyID);
                 throw new Exception($"Error getting Policy by Id: {ex.Message}");
             }
             
@@ -148,64 +171,92 @@ namespace E_Insurance_App.Repositories.Implementation
 
         public async Task<PolicyResponseDTO> PurchasePolicyAsync(PolicyPurchaseDTO policyDto)
         {
-            var policyResponse = new PolicyResponseDTO();
+            _logger.LogInformation("Purchasing policy for CustomerID: {CustomerID}, SchemeID: {SchemeID}", policyDto.CustomerID, policyDto.SchemeID);
 
-            using (var connection = new SqlConnection(_connectionString))
+            try
             {
-                await connection.OpenAsync();
-                using (var command = new SqlCommand("PurchasePolicy", connection))
+                var policyResponse = new PolicyResponseDTO();
+
+                using (var connection = new SqlConnection(_connectionString))
                 {
-                    command.CommandType = CommandType.StoredProcedure;
-
-                    command.Parameters.Add(new SqlParameter("@CustomerID", policyDto.CustomerID));
-                    command.Parameters.Add(new SqlParameter("@SchemeID", policyDto.SchemeID));
-                    command.Parameters.Add(new SqlParameter("@PolicyDetails", policyDto.PolicyDetails));
-                    command.Parameters.Add(new SqlParameter("@BaseRate", policyDto.BaseRate));
-                    command.Parameters.Add(new SqlParameter("@MaturityPeriod", policyDto.MaturityPeriod));
-
-                    using (var reader = await command.ExecuteReaderAsync())
+                    await connection.OpenAsync();
+                    using (var command = new SqlCommand("PurchasePolicy", connection))
                     {
-                        if (await reader.ReadAsync())
+                        command.CommandType = CommandType.StoredProcedure;
+
+                        command.Parameters.Add(new SqlParameter("@CustomerID", policyDto.CustomerID));
+                        command.Parameters.Add(new SqlParameter("@SchemeID", policyDto.SchemeID));
+                        command.Parameters.Add(new SqlParameter("@PolicyDetails", policyDto.PolicyDetails));
+                        command.Parameters.Add(new SqlParameter("@BaseRate", policyDto.BaseRate));
+                        command.Parameters.Add(new SqlParameter("@MaturityPeriod", policyDto.MaturityPeriod));
+
+                        using (var reader = await command.ExecuteReaderAsync())
                         {
-                            policyResponse.PolicyID = reader.GetInt32(0);
-                            policyResponse.CustomerID = reader.GetInt32(1);
-                            policyResponse.SchemeID = reader.GetInt32(2);
-                            policyResponse.PolicyDetails = reader.GetString(3);
-                            policyResponse.CalculatedPremium = reader.GetDecimal(4);
-                            policyResponse.DateIssued = reader.GetDateTime(5);
-                            policyResponse.MaturityPeriod = reader.GetInt32(6);
-                            policyResponse.PolicyLapseDate = reader.GetDateTime(7);
-                            policyResponse.Status = reader.GetString(8);
+                            if (await reader.ReadAsync())
+                            {
+                                policyResponse.PolicyID = reader.GetInt32(0);
+                                policyResponse.CustomerID = reader.GetInt32(1);
+                                policyResponse.SchemeID = reader.GetInt32(2);
+                                policyResponse.PolicyDetails = reader.GetString(3);
+                                policyResponse.CalculatedPremium = reader.GetDecimal(4);
+                                policyResponse.DateIssued = reader.GetDateTime(5);
+                                policyResponse.MaturityPeriod = reader.GetInt32(6);
+                                policyResponse.PolicyLapseDate = reader.GetDateTime(7);
+                                policyResponse.Status = reader.GetString(8);
+                            }
                         }
                     }
                 }
+
+                _logger.LogInformation("Policy purchased successfully with PolicyID: {PolicyID}", policyResponse.PolicyID);
+                return policyResponse;
             }
-            return policyResponse;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during policy purchase");
+                throw new Exception($"Error getting Policy by Id: {ex.Message}");
+            }
         }
 
 
         public async Task<IEnumerable<PolicyResponseDTO>> GetAgentPoliciesAsync(int agentId)
         {
-            return await _context.Policies
-                .Where(p => p.Customer.AgentID == agentId)
-                .Select(p => new PolicyResponseDTO
-                {
-                    PolicyID = p.PolicyID,
-                    CustomerID = p.CustomerID,
-                    SchemeID = p.SchemeID,
-                    PolicyDetails = p.PolicyDetails,
-                    CalculatedPremium = p.Premiums.FirstOrDefault().CalculatedPremium,
-                    DateIssued = p.DateIssued,
-                    MaturityPeriod = p.MaturityPeriod,
-                    PolicyLapseDate = p.PolicyLapseDate,
-                    Status = p.Status
-                })
-                .ToListAsync();
+            _logger.LogInformation("Retrieving policies for AgentID: {AgentID}", agentId);
+
+            try
+            {
+                var policies = await _context.Policies
+                    .Where(p => p.Customer.AgentID == agentId)
+                    .Select(p => new PolicyResponseDTO
+                    {
+                        PolicyID = p.PolicyID,
+                        CustomerID = p.CustomerID,
+                        SchemeID = p.SchemeID,
+                        PolicyDetails = p.PolicyDetails,
+                        CalculatedPremium = p.Premiums.FirstOrDefault().CalculatedPremium,
+                        DateIssued = p.DateIssued,
+                        MaturityPeriod = p.MaturityPeriod,
+                        PolicyLapseDate = p.PolicyLapseDate,
+                        Status = p.Status
+                    })
+                    .ToListAsync();
+
+                _logger.LogInformation("Retrieved {PolicyCount} policies for AgentID: {AgentID}", policies.Count, agentId);
+                return policies;
+            }
+
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during retrieving policies for AgentID: {AgentID}", agentId);
+                throw new Exception($"Error retrieving policies by AgentID: {ex.Message}");
+            }
         }
 
 
         public async Task<List<PolicyResponseDTO>> SearchPoliciesAsync(PolicySearchDTO searchCriteria)
         {
+            _logger.LogInformation("Searching policies with criteria: {SearchCriteria}", searchCriteria);
+
             try
             {
                 var policies = new List<PolicyResponseDTO>();
@@ -243,10 +294,12 @@ namespace E_Insurance_App.Repositories.Implementation
                     }
                 }
 
+                _logger.LogInformation("Found {PolicyCount} policies matching search criteria.", policies.Count);
                 return policies;
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error during searching policies with criteria: {SearchCriteria}", searchCriteria);
                 throw new Exception($"Error searching Policy details: {ex.Message}");
             }
         }
@@ -254,6 +307,8 @@ namespace E_Insurance_App.Repositories.Implementation
 
         public async Task<bool> CancelPolicyAsync(int policyId, string reason, string cancelledBy)
         {
+            _logger.LogInformation("Cancelling policy");
+
             try
             {
                 using (var connection = new SqlConnection(_connectionString))
@@ -267,12 +322,15 @@ namespace E_Insurance_App.Repositories.Implementation
                         command.Parameters.AddWithValue("@CancelledBy", cancelledBy);
 
                         int rowsAffected = await command.ExecuteNonQueryAsync();
+
+                        _logger.LogInformation("The policy is cancelled");
                         return rowsAffected > 0;
                     }
                 }
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error during cancelling policy");
                 throw new Exception($"Error cancelling policy: {ex.Message}");
             }
         }

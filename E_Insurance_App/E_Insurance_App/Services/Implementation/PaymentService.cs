@@ -8,34 +8,57 @@ namespace E_Insurance_App.Services.Implementation
     public class PaymentService : IPaymentService
     {
         private readonly IPaymentRepository _paymentRepository;
+        private readonly ILogger<PaymentService> _logger;
 
-        public PaymentService(IPaymentRepository paymentRepository)
+
+        public PaymentService(IPaymentRepository paymentRepository, ILogger<PaymentService> logger)
         {
             _paymentRepository = paymentRepository;
+            _logger = logger;
         }
 
         public async Task<PaymentResponseDTO> ProcessPaymentAsync(PaymentDTO paymentDTO)
         {
-            var payment = new Payment
+            _logger.LogInformation($"Processing payment for CustomerID: {paymentDTO.CustomerID}, PolicyID: {paymentDTO.PolicyID}");
+
+            try
             {
-                CustomerID = paymentDTO.CustomerID,
-                PolicyID = paymentDTO.PolicyID,
-                PremiumID = paymentDTO.PremiumID,
-                PaymentDate = paymentDTO.PaymentDate,
-                PaymentType = paymentDTO.PaymentType,
-            };
-            return await _paymentRepository.ProcessPaymentAsync(payment);
+                var payment = new Payment
+                {
+                    CustomerID = paymentDTO.CustomerID,
+                    PolicyID = paymentDTO.PolicyID,
+                    PremiumID = paymentDTO.PremiumID,
+                    PaymentDate = paymentDTO.PaymentDate,
+                    PaymentType = paymentDTO.PaymentType,
+                };
+                var result = await _paymentRepository.ProcessPaymentAsync(payment);
+
+                _logger.LogInformation($"Payment processed successfully for CustomerID: {paymentDTO.CustomerID}, PolicyID: {paymentDTO.PolicyID}");
+                return result;
+            }
+
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error during processing payment for CustomerID: {paymentDTO.CustomerID}, PolicyID: {paymentDTO.PolicyID}, Error: {ex.Message}");
+                throw new Exception($"Error processing payment: {ex.Message}");
+            }
         }
 
 
         public async Task<List<PaymentViewDTO>> GetPaymentsByCustomer(int customerID)
         {
+            _logger.LogInformation($"Retrieving payments for CustomerID: {customerID}");
+
             try
             {
-                return await _paymentRepository.GetPaymentsByCustomerID(customerID);
+                var payments = await _paymentRepository.GetPaymentsByCustomerID(customerID);
+
+                _logger.LogInformation($"Retrieved {payments.Count} payments for CustomerID: {customerID}");
+                return payments;
             }
             catch (Exception ex)
             {
+                _logger.LogError($"Error during getting payments for CustomerID: {customerID}, Error: {ex.Message}");
                 throw new Exception($"Error getting Payments by CustomerID: {ex.Message}");
             }
             
@@ -46,17 +69,30 @@ namespace E_Insurance_App.Services.Implementation
         {
             if (paymentId <= 0)
             {
+                _logger.LogWarning("Invalid Payment ID received for receipt generation.");
                 throw new ArgumentException("Invalid Payment ID.");
             }
+            _logger.LogInformation($"Generating receipt for PaymentID: {paymentId}");
 
-            var receipt = await _paymentRepository.GenerateReceiptAsync(paymentId);
-
-            if (receipt == null)
+            try
             {
-                throw new Exception("Error : Receipt not found.");
+                var receipt = await _paymentRepository.GenerateReceiptAsync(paymentId);
+
+                if (receipt == null)
+                {
+                    _logger.LogWarning($"Receipt not found for PaymentID: {paymentId}");
+                    throw new Exception("Error : Receipt not found.");
+                }
+
+                _logger.LogInformation($"Receipt successfully generated for PaymentID: {paymentId}");
+                return receipt;
             }
 
-            return receipt;
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error during generating receipt for PaymentID: {paymentId}, Error: {ex.Message}");
+                throw new Exception($"Error generating receipt: {ex.Message}");
+            }
         }
     }
 }
