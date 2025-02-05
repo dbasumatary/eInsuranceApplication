@@ -64,7 +64,7 @@ namespace E_Insurance_App.Services.Implementation
             }
             catch (Exception x)
             {
-                _logger.LogError($"Error during getting employee by Id: {employeeId}, Error: {ex.Message}");
+                _logger.LogError($"Error during getting employee by Id: {employeeId}, Error: {x.Message}");
                 throw new Exception($"Error getting employee: {x.Message}");
             }
         }
@@ -82,7 +82,7 @@ namespace E_Insurance_App.Services.Implementation
             }
             catch (Exception x)
             {
-                _logger.LogError($"Error during retrieving employees list: {ex.Message}");
+                _logger.LogError($"Error during retrieving employees list: {x.Message}");
                 throw new Exception($"Error retrieving employees: {x.Message}");
             }
             
@@ -112,7 +112,7 @@ namespace E_Insurance_App.Services.Implementation
             }
             catch (Exception x)
             {
-                _logger.LogError($"Error during updating employee with EmployeeID: {employeeId}, Error: {ex.Message}");
+                _logger.LogError($"Error during updating employee with EmployeeID: {employeeId}, Error: {x.Message}");
                 throw new Exception($"Error updating employees: {x.Message}");
             }           
         }
@@ -138,7 +138,7 @@ namespace E_Insurance_App.Services.Implementation
             }
             catch (Exception x)
             {
-                _logger.LogError($"Error during deleting employee with EmployeeID: {employeeId}, Error: {ex.Message}");
+                _logger.LogError($"Error during deleting employee with EmployeeID: {employeeId}, Error: {x.Message}");
 
                 throw new Exception($"Error getting employees: {x.Message}");
             }
