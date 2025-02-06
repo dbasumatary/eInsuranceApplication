@@ -1,9 +1,11 @@
-﻿using E_Insurance_App.Models.DTOs;
+﻿using E_Insurance_App.EmailService.Interface;
+using E_Insurance_App.Models.DTOs;
 using E_Insurance_App.Models.Entities;
 using E_Insurance_App.Repositories.Interface;
 using E_Insurance_App.Services.Interface;
 using E_Insurance_App.Utilities.Interface;
 using Microsoft.AspNetCore.Identity;
+using Newtonsoft.Json;
 
 namespace E_Insurance_App.Services.Implementation
 {
@@ -12,13 +14,14 @@ namespace E_Insurance_App.Services.Implementation
         private readonly IEmployeeRepository _employeeRepository;
         private readonly IPasswordHasher _passwordHasher;
         private readonly ILogger<EmployeeService> _logger;
+        private readonly IRabbitMqService _rabbitMqService;
 
-
-        public EmployeeService(IEmployeeRepository employeeRepository, IPasswordHasher passwordHasher, ILogger<EmployeeService> logger)
+        public EmployeeService(IEmployeeRepository employeeRepository, IPasswordHasher passwordHasher, ILogger<EmployeeService> logger, IRabbitMqService rabbitMqService)
         {
             _employeeRepository = employeeRepository;
             _passwordHasher = passwordHasher;
             _logger = logger;
+            _rabbitMqService = rabbitMqService;
         }
 
         public async Task<Employee> RegisterEmployeeAsync(EmployeeRegisterDTO employeeDto)
@@ -27,6 +30,8 @@ namespace E_Insurance_App.Services.Implementation
 
             try
             {
+                var plainPassword = employeeDto.Password;
+
                 var employee = new Employee
                 {
                     Username = employeeDto.Username,
@@ -37,6 +42,27 @@ namespace E_Insurance_App.Services.Implementation
                 var result = await _employeeRepository.RegisterEmployeeAsync(employee);
 
                 _logger.LogInformation($"Employee with Username: {employeeDto.Username} successfully registered.");
+
+                var emailMessage = new
+                {
+                    Email = result.Email,
+                    Subject = "Welcome to Insurance Company - Here are your Account Credentials",
+                    Body = $@"
+                        <p>Dear {result.FullName},</p>
+                        <p>Welcome to <strong>Insurance Company</strong>. Your Employee account has been successfully created.</p>
+                        <p><strong>Login Credentials:</strong></p>
+                        <ul>
+                            <li><strong>Username:</strong> {result.Username}</li>
+                            <li><strong>Password:</strong> {plainPassword}</li>
+                        </ul>
+                        <p>For security reasons, please change your password after logging in.</p>
+                        <p>If you did not request this account, please contact our support team immediately.</p>
+                        <p>Best regards,<br/><strong>Insurance Company Support Team</strong></p>
+                    "
+                };
+
+                _rabbitMqService.SendMessage("emailQueue", JsonConvert.SerializeObject(emailMessage));
+
                 return result;
             }
 
@@ -85,7 +111,7 @@ namespace E_Insurance_App.Services.Implementation
                 _logger.LogError($"Error during retrieving employees list: {x.Message}");
                 throw new Exception($"Error retrieving employees: {x.Message}");
             }
-            
+
         }
 
         public async Task<Employee?> UpdateEmployeeAsync(int employeeId, EmployeeUpdateDTO employeeDto)
@@ -114,7 +140,7 @@ namespace E_Insurance_App.Services.Implementation
             {
                 _logger.LogError($"Error during updating employee with EmployeeID: {employeeId}, Error: {x.Message}");
                 throw new Exception($"Error updating employees: {x.Message}");
-            }           
+            }
         }
 
         public async Task<bool> DeleteEmployeeAsync(int employeeId)

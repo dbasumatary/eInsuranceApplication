@@ -1,7 +1,10 @@
-﻿using E_Insurance_App.Models.DTOs;
+﻿using E_Insurance_App.EmailService.Interface;
+using E_Insurance_App.Models.DTOs;
 using E_Insurance_App.Models.Entities;
 using E_Insurance_App.Repositories.Interface;
 using E_Insurance_App.Services.Interface;
+using E_Insurance_App.Utilities.Interface;
+using Newtonsoft.Json;
 
 namespace E_Insurance_App.Services.Implementation
 {
@@ -9,11 +12,15 @@ namespace E_Insurance_App.Services.Implementation
     {
         private readonly IAgentRepository _agentRepository;
         private readonly ILogger<AgentService> _logger;
+        private readonly IPasswordHasher _passwordHasher;
+        private readonly IRabbitMqService _rabbitMqService;
 
-        public AgentService(IAgentRepository agentRepository, ILogger<AgentService> logger)
+        public AgentService(IAgentRepository agentRepository, ILogger<AgentService> logger, IPasswordHasher passwordHasher, IRabbitMqService rabbitMqService)
         {
             _agentRepository = agentRepository;
             _logger = logger;
+            _passwordHasher = passwordHasher;
+            _rabbitMqService = rabbitMqService;
         }
 
         public async Task<Agent> RegisterAgentAsync(AgentRegisterDTO agentDto)
@@ -22,10 +29,12 @@ namespace E_Insurance_App.Services.Implementation
 
             try
             {
+                var plainPassword = agentDto.Password;
+
                 var agent = new Agent
                 {
                     Username = agentDto.Username,
-                    Password = BCrypt.Net.BCrypt.HashPassword(agentDto.Password),
+                    Password = _passwordHasher.HashPassword(agentDto.Password),
                     Email = agentDto.Email,
                     FullName = agentDto.FullName,
                     CommissionRate = agentDto.CommissionRate
@@ -34,6 +43,27 @@ namespace E_Insurance_App.Services.Implementation
                 var regAgent = await _agentRepository.RegisterAgentAsync(agent);
 
                 _logger.LogInformation("Agent registered successfully with ID: {AgentID}", regAgent.AgentID);
+
+                var emailMessage = new
+                {
+                    Email = regAgent.Email,
+                    Subject = "Welcome to Insurance Company - Here are your Account Credentials",
+                    Body = $@"
+                        <p>Dear {regAgent.FullName},</p>
+                        <p>Welcome to <strong>Insurance Company</strong>. Your Insurance Agent account has been successfully created.</p>
+                        <p><strong>Login Credentials:</strong></p>
+                        <ul>
+                            <li><strong>Username:</strong> {regAgent.Username}</li>
+                            <li><strong>Password:</strong> {plainPassword}</li>
+                        </ul>
+                        <p>For security reasons, please change your password after logging in.</p>
+                        <p>If you did not request this account, please contact our support team immediately.</p>
+                        <p>Best regards,<br/><strong>Insurance Company Support Team</strong></p>
+                    "
+                };
+
+                _rabbitMqService.SendMessage("emailQueue", JsonConvert.SerializeObject(emailMessage));
+
                 return regAgent;
             }
 

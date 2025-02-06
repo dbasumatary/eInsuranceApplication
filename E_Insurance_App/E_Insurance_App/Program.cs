@@ -1,5 +1,7 @@
 
 using E_Insurance_App.Data;
+using E_Insurance_App.EmailService.Implementation;
+using E_Insurance_App.EmailService.Interface;
 using E_Insurance_App.Repositories.Implementation;
 using E_Insurance_App.Repositories.Interface;
 using E_Insurance_App.Services.Implementation;
@@ -12,7 +14,9 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using NLog;
 using NLog.Extensions.Logging;
+using RabbitMQ.Client;
 using System.Text;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace E_Insurance_App
 {
@@ -21,11 +25,24 @@ namespace E_Insurance_App
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-
+            
             //NLog Setup
             LogManager.Setup().LoadConfigurationFromFile("nlog.config");
 
             // Add services to the container.
+            // Register RabbitMQ 
+            builder.Services.AddSingleton<IConnection>(sp =>
+            {
+                var factory = new ConnectionFactory
+                {
+                    HostName = builder.Configuration["RabbitMQ:HostName"] ?? "localhost",
+                    Port = builder.Configuration.GetValue<int>("RabbitMQ:Port", 5672),
+                    UserName = builder.Configuration["RabbitMQ:UserName"] ?? "guest",
+                    Password = builder.Configuration["RabbitMQ:Password"] ?? "guest"
+                };
+
+                return factory.CreateConnection();
+            });
 
             //Ignore circular dependency
             builder.Services.AddControllers()
@@ -103,10 +120,12 @@ namespace E_Insurance_App
             builder.Services.AddScoped<IPremiumService, PremiumService>();
             builder.Services.AddScoped<IPaymentService, PaymentService>();
             builder.Services.AddScoped<ICommissionService, CommissionService>();
+            builder.Services.AddSingleton<IRabbitMqService, RabbitMqService>();
+            builder.Services.AddSingleton<EmailConsumer>();
+            builder.Services.AddHostedService<EmailConsumerService>();
 
 
             //JWT
-            //var jwtKey = builder.Configuration.GetSection("Jwt")["Key"];
             var key = builder.Configuration["JWT-Key"];
             var jwtKey = builder.Configuration["Jwt:Key"];
 
@@ -118,8 +137,6 @@ namespace E_Insurance_App
             {
                 throw new Exception("JWT key is missing in the configuration.");
             }
-            //var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]);
-            //var key = Encoding.ASCII.GetBytes(jwtKey);
 
             builder.Services.AddAuthentication(x =>
             {
@@ -164,7 +181,7 @@ namespace E_Insurance_App
 
             builder.Logging.ClearProviders();
             builder.Logging.AddNLog();
-
+            
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -172,6 +189,7 @@ namespace E_Insurance_App
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
+                app.UseDeveloperExceptionPage();
             }
 
             app.UseHttpsRedirection();

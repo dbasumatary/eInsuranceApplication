@@ -1,7 +1,10 @@
-﻿using E_Insurance_App.Models.DTOs;
+﻿using E_Insurance_App.EmailService.Interface;
+using E_Insurance_App.Models.DTOs;
 using E_Insurance_App.Models.Entities;
 using E_Insurance_App.Repositories.Interface;
 using E_Insurance_App.Services.Interface;
+using E_Insurance_App.Utilities.Interface;
+using Newtonsoft.Json;
 
 namespace E_Insurance_App.Services.Implementation
 {
@@ -9,11 +12,15 @@ namespace E_Insurance_App.Services.Implementation
     {
         private readonly ICustomerRepository _customerRepository;
         private readonly ILogger<CustomerService> _logger;
+        private readonly IPasswordHasher _passwordHasher;
+        private readonly IRabbitMqService _rabbitMqService;
 
-        public CustomerService(ICustomerRepository customerRepository, ILogger<CustomerService> logger)
+        public CustomerService(ICustomerRepository customerRepository, ILogger<CustomerService> logger, IPasswordHasher passwordHasher, IRabbitMqService rabbitMqService)
         {
             _customerRepository = customerRepository;
             _logger = logger;
+            _passwordHasher = passwordHasher;
+            _rabbitMqService = rabbitMqService;
         }
 
         public async Task<Customer> RegisterCustomerAsync(CustomerRegisterDTO customerDto)
@@ -22,12 +29,14 @@ namespace E_Insurance_App.Services.Implementation
 
             try
             {
+                var plainPassword = customerDto.Password;
+
                 var customer = new Customer
                 {
                     Username = customerDto.Username,
                     FullName = customerDto.FullName,
                     Email = customerDto.Email,
-                    Password = BCrypt.Net.BCrypt.HashPassword(customerDto.Password),
+                    Password = _passwordHasher.HashPassword(customerDto.Password),
                     Phone = customerDto.Phone,
                     DateOfBirth = customerDto.DateOfBirth,
                     AgentID = customerDto.AgentID
@@ -36,6 +45,27 @@ namespace E_Insurance_App.Services.Implementation
                 var result = await _customerRepository.RegisterCustomerAsync(customer);
 
                 _logger.LogInformation($"Customer with Username: {customerDto.Username} successfully registered.");
+
+                var emailMessage = new
+                {
+                    Email = result.Email,
+                    Subject = "Welcome to Insurance Company - Here are your Account Credentials",
+                    Body = $@"
+                        <p>Dear {result.FullName},</p>
+                        <p>Welcome to <strong>Insurance Company</strong>. Your Customer account has been successfully created.</p>
+                        <p><strong>Login Credentials:</strong></p>
+                        <ul>
+                            <li><strong>Username:</strong> {result.Username}</li>
+                            <li><strong>Password:</strong> {plainPassword}</li>
+                        </ul>
+                        <p>For security reasons, please change your password after logging in.</p>
+                        <p>If you did not request this account, please contact our support team immediately.</p>
+                        <p>Best regards,<br/><strong>Insurance Company Support Team</strong></p>
+                    "
+                };
+
+                _rabbitMqService.SendMessage("emailQueue", JsonConvert.SerializeObject(emailMessage));
+
                 return result;
             }
             catch (Exception ex)
